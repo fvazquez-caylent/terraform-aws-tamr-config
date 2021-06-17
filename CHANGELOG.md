@@ -1,5 +1,8 @@
 # AWS Tamr Config Repo
 
+## v1.1.2 - June 17th 2021
+* Adds configuration to set TAMR_HBASE_EXTRA_URIS to s3 location
+
 ## v1.1.1 - June 8th 2021
 * Adds native support for backup config and DMS
 * Updates examples to mark `rds-pw` and `private-key` as sensitive
