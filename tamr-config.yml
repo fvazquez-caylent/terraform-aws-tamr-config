@@ -12,6 +12,7 @@ TAMR_CONNECTION_INFO_TYPE: hbase-site
 TAMR_HBASE_NAMESPACE: ${hbase_namespace}
 TAMR_HBASE_COMPRESSION: snappy
 TAMR_HBASE_CONFIG_URIS: s3://${tamr_data_bucket}/${hbase_config_path}hbase-site.xml
+TAMR_HBASE_EXTRA_URIS: s3://${tamr_data_bucket}/${hbase_config_path}hbase-env.sh
 
 # HBase - Properties
 TAMR_HBASE_SORT_BATCHES_ENABLED: false
