@@ -1,5 +1,8 @@
 # AWS Tamr Config Repo
 
+## v2.4.1 - April 21st 2022
+* Updates minimal required terraform version to grant compatiblity.
+
 ## v2.4.0 - March 3rd 2022
 * Updates complete example to integrate Cloudwatch for Tamr VM and EMR Cluster
 * Updates examples to use new versions of modules
