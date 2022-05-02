@@ -1,3 +1,10 @@
+#################################################################################################################
+# This version has been patched to allow the use of terraform version 0.13.7, if you are using a newer
+# version we suggest going to the next major release.
+# This version is creating security groups using resource blocks instead of modules.
+# Internal ticket for reference is CA-214.
+#################################################################################################################
+
 locals {
   ami_id = var.ami_id != "" ? var.ami_id : data.aws_ami.tamr-vm.id
 }
@@ -5,7 +12,7 @@ locals {
 data "aws_ami" "tamr-vm" {
   most_recent = true
   owners      = ["679593333241"]
-  name_regex  = "ami-0747bdcabd34c712a-with-tamr-v20210100-20gb-1640221699-no-license-8892620f-9ecf-4370-b0a8-0c23b1d477d1"
+  name_regex  = "ami-[a-z0-9]*-with-tamr-v202[0-9]*-[0-9]*gb-[0-9]*-no-license-.*"
   filter {
     name   = "product-code"
     values = ["832nkbrayw00cnivlh6nbbi6p"]
@@ -17,7 +24,8 @@ module "tamr-vm" {
 
   ami                         = local.ami_id
   instance_type               = "r5.2xlarge"
-  key_name                    = module.emr_key_pair.key_pair_key_name
+  #key_name                    = module.emr_key_pair.key_pair_key_name
+  key_name = "fdcaylent"
   subnet_id                   = var.application_subnet_id
   vpc_id                      = var.vpc_id
   security_group_ids          = module.aws-sg-vm.security_group_ids
