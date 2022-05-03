@@ -1,0 +1,5 @@
+terraform.tfstate*
+
+# Ignore any module-generated files
+./rendered-config.yml
+./*.yml
