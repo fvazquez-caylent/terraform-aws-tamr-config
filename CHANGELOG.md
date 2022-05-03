@@ -1,7 +1,7 @@
 # AWS Tamr Config Repo
 
 ## v2.4.1 - April 27th 2022
-* Updates examples to allow the use of terraform version 0.13.7
+* Adds "examples-tf13-compatible" directory which hosts examples to allow the use of terraform version 0.13.7
 
 ## v2.4.0 - March 3rd 2022
 * Updates complete example to integrate Cloudwatch for Tamr VM and EMR Cluster
