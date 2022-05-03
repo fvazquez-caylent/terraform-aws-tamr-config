@@ -1,10 +1,3 @@
-#################################################################################################################
-# This version has been patched to allow the use of terraform version 0.13.7, if you are using a newer
-# version we suggest going to the next major release.
-# This version is creating security groups using resource blocks instead of modules.
-# Internal ticket for reference is CA-214.
-#################################################################################################################
-
 # Generate random password for db
 resource "random_password" "rds-password" {
   length  = 16
@@ -26,7 +19,7 @@ module "rds-postgres" {
   # Network requirement: DB subnet group needs a subnet in at least two AZs
   rds_subnet_ids = var.data_subnet_ids
 
-  security_group_ids = [aws_security_group.rds-postgres-sg.id]
+  security_group_ids = module.rds-postgres-sg.security_group_ids
   tags               = var.tags
 }
 
@@ -34,31 +27,15 @@ module "sg-ports-rds" {
   source = "git::git@github.com:Datatamer/terraform-aws-rds-postgres.git//modules/rds-postgres-ports?ref=3.1.0"
 }
 
-### Security group for RDS PostgreSQL database ###
-
-resource "aws_security_group" "rds-postgres-sg" {
-  name   = format("%s-%s", var.name_prefix, "-rds")
-  vpc_id = var.vpc_id
-}
-
-resource "aws_security_group_rule" "rds_ingress_rules" {
-  for_each                 = var.rds_ingress_rules
-  type                     = "ingress"
-  from_port                = each.value.from
-  to_port                  = each.value.to
-  protocol                 = each.value.proto
-  description              = format("Tamr ingress SG rule %s for port %s", each.key, each.value.from)
-  source_security_group_id = module.aws-sg-vm.security_group_ids[0]
-  security_group_id        = aws_security_group.rds-postgres-sg.id
-}
-
-resource "aws_security_group_rule" "rds_egress_rules" {
-  for_each          = var.standard_egress_rules
-  type              = "egress"
-  from_port         = "0"
-  to_port           = "0"
-  protocol          = each.value.proto
-  description       = format("Tamr egress-cidr-%s", each.key)
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.rds-postgres-sg.id
+module "rds-postgres-sg" {
+  source                  = "git::git@github.com:Datatamer/terraform-aws-security-groups.git?ref=1.0.0"
+  vpc_id                  = var.vpc_id
+  ingress_cidr_blocks     = var.ingress_cidr_blocks
+  ingress_security_groups = module.aws-sg-vm.security_group_ids
+  egress_cidr_blocks      = var.egress_cidr_blocks
+  ingress_ports           = module.sg-ports-rds.ingress_ports
+  sg_name_prefix          = var.name_prefix
+  egress_protocol         = "all"
+  ingress_protocol        = "tcp"
+  tags                    = var.tags
 }

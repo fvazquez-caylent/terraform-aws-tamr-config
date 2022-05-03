@@ -1,10 +1,3 @@
-#################################################################################################################
-# This version has been patched to allow the use of terraform version 0.13.7, if you are using a newer
-# version we suggest going to the next major release.
-# This version is creating security groups using resource blocks instead of modules.
-# Internal ticket for reference is CA-214.
-#################################################################################################################
-
 module "tamr-config" {
   #   source = "git::git@github.com:Datatamer/terraform-aws-tamr-config?ref=2.3.0"
   source = "../.."
@@ -67,10 +60,10 @@ module "tamr-config" {
 
   emr_managed_master_sg_id = module.ephemeral-spark-sgs.emr_managed_sg_id
   # emr_managed_master_sg_id = "" # you may leave this blank and AWS creates one automatically
-  emr_additional_master_sg_id = join(",", [aws_security_group.aws-emr-sg-core.id])
+  emr_additional_master_sg_id = join(",", module.aws-emr-sg-core.security_group_ids)
   emr_managed_core_sg_id      = module.ephemeral-spark-sgs.emr_managed_sg_id
   # emr_managed_core_sg_id   = "" # you may leave this blank and AWS creates one automatically
-  emr_additional_core_sg_id = join(",", [aws_security_group.aws-emr-sg-master.id])
+  emr_additional_core_sg_id = join(",", module.aws-emr-sg-master.security_group_ids)
   emr_service_access_sg_id  = ""
 }
 
