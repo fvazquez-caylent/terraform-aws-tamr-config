@@ -14,11 +14,9 @@ data "aws_ami" "tamr-vm" {
 
 module "tamr-vm" {
   source = "git::git@github.com:Datatamer/terraform-emr-tamr-vm?ref=4.4.0"
-
-  ami           = local.ami_id
-  instance_type = "r5.2xlarge"
-  #key_name                    = module.emr_key_pair.key_pair_key_name
-  key_name                    = "fdcaylent"
+  ami                         = local.ami_id
+  instance_type               = "r5.2xlarge"
+  key_name                    = module.emr_key_pair.key_pair_key_name
   subnet_id                   = module.vpc.application_subnet_id
   vpc_id                      = module.vpc.vpc_id
   security_group_ids          = module.aws-sg-vm.security_group_ids
