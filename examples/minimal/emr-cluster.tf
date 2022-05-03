@@ -1,10 +1,3 @@
-#################################################################################################################
-# This version has been patched to allow the use of terraform version 0.13.7, if you are using a newer
-# version we suggest going to the next major release.
-# This version is creating security groups using resource blocks instead of modules.
-# Internal ticket for reference is CA-214.
-#################################################################################################################
-
 locals {
   applications = ["Spark", "Hbase", "Ganglia"]
 }
@@ -24,9 +17,9 @@ module "emr" {
   # Networking
   subnet_id                 = var.compute_subnet_id
   vpc_id                    = var.vpc_id
-  emr_managed_master_sg_ids = [aws_security_group.aws-emr-sg-master.id]
-  emr_managed_core_sg_ids   = [aws_security_group.aws-emr-sg-core.id]
-  emr_service_access_sg_ids = [aws_security_group.aws-emr-sg-service-access.id]
+  emr_managed_master_sg_ids = module.aws-emr-sg-master.security_group_ids
+  emr_managed_core_sg_ids   = module.aws-emr-sg-core.security_group_ids
+  emr_service_access_sg_ids = module.aws-emr-sg-service-access.security_group_ids
 
   # External resource references
   bucket_name_for_root_directory = module.s3-data.bucket_name
@@ -64,81 +57,40 @@ module "sg-ports-emr" {
   applications = local.applications
 }
 
-### Security group for Master EMR Master node ###
-
-resource "aws_security_group" "aws-emr-sg-master" {
-  name        = format("%s-%s", var.name_prefix, "emr-master")
-  description = "EMR Master security group for Tamr (CIDR)"
-  vpc_id      = var.vpc_id
+module "aws-emr-sg-master" {
+  source                  = "git::git@github.com:Datatamer/terraform-aws-security-groups.git?ref=1.0.0"
+  vpc_id                  = var.vpc_id
+  ingress_cidr_blocks     = var.ingress_cidr_blocks
+  ingress_security_groups = module.aws-sg-vm.security_group_ids
+  egress_cidr_blocks      = var.egress_cidr_blocks
+  ingress_ports           = module.sg-ports-emr.ingress_master_ports
+  sg_name_prefix          = format("%s-%s", var.name_prefix, "emr-master")
+  egress_protocol         = "all"
+  ingress_protocol        = "tcp"
+  tags                    = merge(var.tags, var.emr_tags)
 }
 
-resource "aws_security_group_rule" "master_ingress_rules" {
-  for_each                 = var.master_ingress_rules
-  type                     = "ingress"
-  from_port                = each.value.from
-  to_port                  = each.value.to
-  protocol                 = each.value.proto
-  description              = format("Tamr ingress SG rule %s for port %s", each.key, each.value.from)
-  source_security_group_id = module.aws-sg-vm.security_group_ids[0]
-  security_group_id        = aws_security_group.aws-emr-sg-master.id
+module "aws-emr-sg-core" {
+  source                  = "git::git@github.com:Datatamer/terraform-aws-security-groups.git?ref=1.0.0"
+  vpc_id                  = var.vpc_id
+  ingress_cidr_blocks     = var.ingress_cidr_blocks
+  ingress_security_groups = module.aws-sg-vm.security_group_ids
+  egress_cidr_blocks      = var.egress_cidr_blocks
+  ingress_ports           = module.sg-ports-emr.ingress_core_ports
+  sg_name_prefix          = format("%s-%s", var.name_prefix, "emr-core")
+  egress_protocol         = "all"
+  ingress_protocol        = "tcp"
+  tags                    = merge(var.tags, var.emr_tags)
 }
 
-resource "aws_security_group_rule" "master_egress_rules" {
-  for_each          = var.standard_egress_rules
-  type              = "egress"
-  from_port         = "0"
-  to_port           = "0"
-  protocol          = each.value.proto
-  description       = format("Tamr egress CIDR rule %s", each.key)
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.aws-emr-sg-master.id
-}
-
-### Security group and rules for EMR Core nodes ###
-
-resource "aws_security_group" "aws-emr-sg-core" {
-  name        = format("%s-%s", var.name_prefix, "emr-core")
-  description = "EMR Core security group for Tamr (CIDR)"
-  vpc_id      = var.vpc_id
-}
-
-resource "aws_security_group_rule" "core_ingress_rules" {
-  for_each                 = var.core_ingress_rules
-  type                     = "ingress"
-  from_port                = each.value.from
-  to_port                  = each.value.to
-  protocol                 = each.value.proto
-  description              = format("Tamr ingress SG rule %s for port %s", each.key, each.value.from)
-  source_security_group_id = module.aws-sg-vm.security_group_ids[0]
-  security_group_id        = aws_security_group.aws-emr-sg-core.id
-}
-
-resource "aws_security_group_rule" "core_egress_rules" {
-  for_each          = var.standard_egress_rules
-  type              = "egress"
-  from_port         = each.value.from
-  to_port           = each.value.to
-  protocol          = each.value.proto
-  description       = format("Tamr egress CIDR rule %s", each.key)
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.aws-emr-sg-core.id
-}
-
-### Security group and rules for EMR service access ###
-
-resource "aws_security_group" "aws-emr-sg-service-access" {
-  name        = format("%s-%s", var.name_prefix, "emr-service-access")
-  description = "EMR Service Access security group for Tamr (CIDR)"
-  vpc_id      = var.vpc_id
-}
-
-resource "aws_security_group_rule" "service_access_egress_rules" {
-  for_each          = var.standard_egress_rules
-  type              = "egress"
-  from_port         = each.value.from
-  to_port           = each.value.to
-  protocol          = each.value.proto
-  description       = format("Tamr egress CIDR rule %s", each.key)
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.aws-emr-sg-service-access.id
+module "aws-emr-sg-service-access" {
+  source              = "git::git@github.com:Datatamer/terraform-aws-security-groups.git?ref=1.0.0"
+  vpc_id              = var.vpc_id
+  ingress_cidr_blocks = var.ingress_cidr_blocks
+  ingress_ports       = module.sg-ports-emr.ingress_service_access_ports
+  egress_cidr_blocks  = var.egress_cidr_blocks
+  sg_name_prefix      = format("%s-%s", var.name_prefix, "emr-service-access")
+  egress_protocol     = "all"
+  ingress_protocol    = "tcp"
+  tags                = merge(var.tags, var.emr_tags)
 }

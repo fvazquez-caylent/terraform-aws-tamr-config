@@ -1,10 +1,3 @@
-#################################################################################################################
-# This version has been patched to allow the use of terraform version 0.13.7, if you are using a newer
-# version we suggest going to the next major release.
-# This version is creating security groups using resource blocks instead of modules.
-# Internal ticket for reference is CA-214.
-#################################################################################################################
-
 locals {
   ami_id = var.ami_id != "" ? var.ami_id : data.aws_ami.tamr-vm.id
 }
@@ -12,7 +5,7 @@ locals {
 data "aws_ami" "tamr-vm" {
   most_recent = true
   owners      = ["679593333241"]
-  name_regex  = "ami-[a-z0-9]*-with-tamr-v202[0-9]*-[0-9]*gb-[0-9]*-no-license-.*"
+  name_regex  = "ami-0747bdcabd34c712a-with-tamr-v20210100-20gb-1640221699-no-license-8892620f-9ecf-4370-b0a8-0c23b1d477d1"
   filter {
     name   = "product-code"
     values = ["832nkbrayw00cnivlh6nbbi6p"]
@@ -43,6 +36,7 @@ module "tamr-vm" {
   ]
   emr_abac_valid_tags = var.emr_abac_valid_tags
 }
+
 
 module "aws-vm-sg-ports" {
   source = "git::git@github.com:Datatamer/terraform-aws-tamr-vm.git//modules/aws-security-groups?ref=4.4.0"
