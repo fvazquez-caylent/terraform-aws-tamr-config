@@ -5,7 +5,7 @@ locals {
 data "aws_ami" "tamr-vm" {
   most_recent = true
   owners      = ["679593333241"]
-  name_regex  = "ami-0747bdcabd34c712a-with-tamr-v20210100-20gb-1640221699-no-license-8892620f-9ecf-4370-b0a8-0c23b1d477d1"
+  name_regex  = "ami-[a-z0-9]*-with-tamr-v202[0-9]*-[0-9]*gb-[0-9]*-no-license-.*"
   filter {
     name   = "product-code"
     values = ["832nkbrayw00cnivlh6nbbi6p"]
