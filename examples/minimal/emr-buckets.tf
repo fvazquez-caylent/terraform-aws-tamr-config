@@ -1,10 +1,3 @@
-#################################################################################################################
-# This version has been patched to allow the use of terraform version 0.13.7, if you are using a newer
-# version we suggest going to the next major release.
-# This version is creating security groups using resource blocks instead of modules.
-# Internal ticket for reference is CA-214.
-#################################################################################################################
-
 # Set up logs bucket with read/write permissions
 module "s3-logs" {
   source      = "git::git@github.com:Datatamer/terraform-aws-s3.git?ref=1.1.1"
